@@ -11,7 +11,14 @@ import scrapy
 class DriectoryItem(scrapy.Item):
     # define the fields for your item here like:
     name = scrapy.Field()
+    description = scrapy.Field()
     parentnames = scrapy.Field()
     sonnames = scrapy.Field()
+    relatednames = scrapy.Field()
 
     pass
+
+class WordItem(scrapy.Item):
+    # define the fields for your item here like:
+    name = scrapy.Field()
+    description = scrapy.Field()

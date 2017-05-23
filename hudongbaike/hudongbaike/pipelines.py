@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-import sys
-reload(sys)
 
 from twisted.enterprise import adbapi
 import MySQLdb
 import MySQLdb.cursors
 import codecs
 import json
+import items
+
 # Define your item pipelines here
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
@@ -17,13 +17,22 @@ class JsonWithEncodingPipeline(object):
        1、在settings.py文件中配置
        2、在自己实现的爬虫类中yield item,会自动执行'''
     def __init__(self):
-        self.file = codecs.open('info.json', 'w', encoding='utf-8')#保存为json文件
+        self.dfile = codecs.open('directory.txt', 'w', encoding='utf-8')#保存为json文件
+        self.wfile = codecs.open('word.txt', 'w', encoding='utf-8')  # 保存为json文件
+
     def process_item(self, item, spider):
-        line = json.dumps(dict(item)).encode('utf-8') + "\n"#转为json的
-        self.file.write(line)#写入文件中
+        print('JsonWithEncodingPipeline.process_item: %s' % item['name'])
+        if isinstance(item, items.DriectoryItem):
+            self.dfile.write(item['name'])  # 写入文件中
+            self.dfile.write('\n')
+            pass
+        elif isinstance(item, items.WordItem):
+            self.wfile.write(item['name'])  # 写入文件中
+            self.wfile.write('\n')
         return item
     def spider_closed(self, spider):#爬虫结束时关闭文件
-        self.file.close()
+        self.dfile.close()
+        self.wfile.close()
 
 class HudongbaikePipeline(object):
     '''保存到数据库中对应的class

@@ -65,7 +65,7 @@ ROBOTSTXT_OBEY = True
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'hudongbaike.pipelines.HudongbaikePipeline': 300,
+    #'hudongbaike.pipelines.HudongbaikePipeline': 300,
     'hudongbaike.pipelines.JsonWithEncodingPipeline': 100,  # 保存到文件中
 }
 
