@@ -6,5 +6,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="quotesbot" />
     <orderEntry type="module" module-name="PythonCrawler-Scrapy-Mysql-File-Template" />
+    <orderEntry type="module" module-name="PythonCrawler-Scrapy-Mysql-File-Template" />
   </component>
 </module>

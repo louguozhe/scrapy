@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import sys
+reload(sys)
+
 import scrapy
 
 from hudongbaike.items import DriectoryItem
@@ -7,6 +10,15 @@ from hudongbaike.items import DriectoryItem
 #参考
 #https://github.com/lawlite19/PythonCrawler-Scrapy-Mysql-File-Template
 
+#CSS and XPath
+#house_li = response.css('.house-lst .info-panel')
+#house_li = response.xpath('//ul[@class="house-lst"]/li/div[@class="info-panel"]')
+#response.css('.secondcon.fl li:nth-child(1)').css('.botline a::text').extract_first()
+#response.xpath('//div[@class="secondcon fl"]//li[1]/span[@class="botline"]//a/text()').extract_first()
+#response.css('.secondcon.fl li:last-child').css('.botline strong::text').extract_first()
+#response.xpath('//div[@class="secondcon fl"]//li[last()]//span[@class="botline"]/strong/text()').extract_first()
+#house_li.css('a::attr("href")').extract_first()
+#house_li.xpath('.//a/@href').extract_first()
 
 class FenleiSpider(scrapy.Spider):
     name = 'fenlei'
@@ -38,20 +50,23 @@ class FenleiSpider(scrapy.Spider):
         #     ddurl = dd.css('a ::text').extract_first()
         #     yield scrapy.Request(response.urljoin(ddurl), callback=self.parse_ddindex)
         # pass
-        yield scrapy.Request(response.urljoin(u'http://fenlei.baike.com/女性科学家/'), callback=self.parse_ddindex)
+        yield scrapy.Request(response.urljoin(u'http://fenlei.baike.com/水果/'), callback=self.parse_ddindex)
 
     def parse_ddindex(self, response):
-        ddname = response.css('span#category_title ::text').extract_first()
+        #ddname = response.css('span#category_title ::text').extract_first()
+        ddname = response.xpath('//span[@id="category_title"]/text()').extract_first().encode('utf-8')
         item = DriectoryItem()
         item['name'] = ddname
-        parentnames = response.css('div.sort_all > p[1] > a::text').extract_first()
-        item['parentnames'] = ''
+        alist = response.css('div.sort_all p:nth-child(2) a::text').extract()
+        item['parentnames'] = ','.join(alist).encode('utf-8')
+        alist = response.css('div.sort_all p:nth-child(4) a::text').extract()
+        item['sonnames'] = ','.join(alist).encode('utf-8')
         yield item
 
 
     def parse(self, response):
         for dd in response.css('dd'):
-            ddname = dd.css('a ::text').extract_first()
+            ddname = dd.css('a ::text').extract_first().encode('utf-8')
             yield {'dd': ddname}
             self.logger.info('A fenlei: %s', ddname)
         #for dd in response.xpath('//*[@id="f-a"]/div/div/dl/dd'):
