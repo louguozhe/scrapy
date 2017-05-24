@@ -22,7 +22,7 @@ class JsonWithEncodingPipeline(object):
 
     def process_item(self, item, spider):
         print('JsonWithEncodingPipeline.process_item: %s' % item['name'])
-        if isinstance(item, items.DriectoryItem):
+        if isinstance(item, items.DirectoryItem):
             self.dfile.write(item['name'])  # 写入文件中
             self.dfile.write('\n')
             pass
@@ -67,16 +67,20 @@ class HudongbaikePipeline(object):
 
     # 写入数据库中
     def _conditional_insert(self, tx, item):
-        #print item['name']
-        name = item['name']
-        sql = "insert into hudong_fenlei(name,subname) values(%s,%s)"
-        for pname in item['parentnames'].splite(','):
-            params = (pname, name)
+        if isinstance(item, items.DirectoryItem):
+            sql = "insert into hudong_directory_description(name,url,description) values(%s,%s,%s)"
+            params = (item['name'],item['url'], item['description'])
             tx.execute(sql, params)
-        for sname in item['sonnames'].splite(','):
-            params = (name, sname)
+        elif isinstance(item, items.DirectoryGraphyItem):
+            sql = "insert into hudong_directory_graphy(name,subname) values(%s,%s)"
+            params = (item['name'], item['subname'])
             tx.execute(sql, params)
-        tx.commit()
+        elif isinstance(item, items.DirectoryRelationItem):
+            sql = "insert into hudong_directory_relation(name,relationname) values(%s,%s)"
+            params = (item['name'], item['relationname'])
+            tx.execute(sql, params)
+
+       #tx.commit()
 
     # 错误处理方法
     def _handle_error(self, failue, item, spider):

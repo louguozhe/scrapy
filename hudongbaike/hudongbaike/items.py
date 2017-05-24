@@ -8,14 +8,22 @@
 import scrapy
 
 
-class DriectoryItem(scrapy.Item):
+class DirectoryItem(scrapy.Item):
     # define the fields for your item here like:
     name = scrapy.Field()
+    url = scrapy.Field()
     description = scrapy.Field()
-    parentnames = scrapy.Field()
-    sonnames = scrapy.Field()
-    relatednames = scrapy.Field()
+    pass
 
+class DirectoryGraphyItem(scrapy.Item):
+    # define the fields for your item here like:
+    name = scrapy.Field()
+    subname = scrapy.Field()
+    pass
+class DirectoryRelationItem(scrapy.Item):
+    # define the fields for your item here like:
+    name = scrapy.Field()
+    relationname = scrapy.Field()
     pass
 
 class WordItem(scrapy.Item):
