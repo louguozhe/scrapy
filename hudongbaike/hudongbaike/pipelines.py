@@ -23,12 +23,14 @@ class JsonWithEncodingPipeline(object):
     def process_item(self, item, spider):
         print('JsonWithEncodingPipeline.process_item: %s' % item['name'])
         if isinstance(item, items.DirectoryItem):
-            self.dfile.write(item['name'])  # 写入文件中
-            self.dfile.write('\n')
+            self.dfile.write('DirectoryItem->%s:%s\n' % (item['name'],item['url']))  # 写入文件中
             pass
-        elif isinstance(item, items.WordItem):
-            self.wfile.write(item['name'])  # 写入文件中
-            self.wfile.write('\n')
+        elif isinstance(item, items.DirectoryGraphyItem):
+            self.dfile.write('DirectoryGraphyItem->%s:%s\n' % (item['name'],item['subname']))  # 写入文件中
+            pass
+        elif isinstance(item, items.DirectoryRelationItem):
+            self.dfile.write('DirectoryRelationItem->%s:%s\n' % (item['name'],item['relationname']))  # 写入文件中
+            pass
         return item
     def spider_closed(self, spider):#爬虫结束时关闭文件
         self.dfile.close()

@@ -6,6 +6,7 @@ import scrapy
 from hudongbaike.items import DirectoryItem
 from hudongbaike.items import DirectoryGraphyItem
 from hudongbaike.items import DirectoryRelationItem
+from hudongbaike.items import WordItem
 
 
 #参考
@@ -21,7 +22,7 @@ from hudongbaike.items import DirectoryRelationItem
 #house_li.css('a::attr("href")').extract_first()
 #house_li.xpath('.//a/@href').extract_first()
 
-class FenleiSpider(scrapy.Spider):
+class FenleiSpider(scrapy.spiders.Spider):
     name = 'fenlei'
     allowed_domains = ['baike.com']
     #start_urls = ['http://fenlei.baike.com/']
@@ -33,8 +34,8 @@ class FenleiSpider(scrapy.Spider):
 
     def start_requests(self):
         # instead start_urls
-        yield scrapy.Request('http://fenlei.baike.com/', self.parse_index)
-        #yield scrapy.Request('http://www.example.com/2.html', self.parse)
+        #yield scrapy.Request('http://fenlei.baike.com/', self.parse_index)
+        yield scrapy.Request(u'http://fenlei.baike.com/水果/', callback=self.parse_ddindex)
 
     # def start_requests(self):
     #     return [scrapy.FormRequest("http://www.example.com/login",
@@ -52,7 +53,7 @@ class FenleiSpider(scrapy.Spider):
         #     yield scrapy.Request(response.urljoin(ddurl), callback=self.parse_ddindex)
         # pass
 
-        yield scrapy.Request(response.urljoin(u'http://fenlei.baike.com/水果/'), callback=self.parse_ddindex)
+        yield scrapy.Request(response.urljoin(u'http://fenlei.baike.com/水果种类/'), callback=self.parse_ddindex)
         #yield scrapy.Request(response.urljoin(u'http://fenlei.baike.com/水果/list'), callback=self.parse_wordlist)
         #yield scrapy.Request(response.urljoin(u'http://www.baike.com/wiki/澳芒'), callback=self.parse_word)
 
@@ -70,12 +71,14 @@ class FenleiSpider(scrapy.Spider):
         sublist = response.css('div.sort_all p:nth-child(4) a')
         for subname in sublist:
             subdirectoryurl = subname.css('::attr(href)').extract_first()
-            print('subdirectoryurl: ' + subdirectoryurl)
-            yield scrapy.Request(response.urljoin(subdirectoryurl), callback=self.parse_ddindex)
+            # print('subdirectoryurl: ' + subdirectoryurl)
+            #yield scrapy.Request(response.urljoin(subdirectoryurl), callback=self.parse_ddindex)
+            yield scrapy.Request(subdirectoryurl, callback=self.parse_ddindex)
             item = DirectoryGraphyItem()
             item['name'] = ddname
             item['subname'] = subname.css('::text').extract_first()
             yield item
+
         # relation directory
         # relationlist = response.css('div.sort_all p:nth-child(6) a::text').extract()
         # for parentname in relationlist:
