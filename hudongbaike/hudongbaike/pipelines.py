@@ -84,7 +84,7 @@ class HudongbaikePipeline(object):
             sql = "insert into hudong_directory_relation(name,relationname) values(%s,%s)"
             params = (item['name'], item['relationname'])
             tx.execute(sql, params)
-            elif isinstance(item, items.WordItem):
+        elif isinstance(item, items.WordItem):
             sql = "insert into hudong_word_relation(name,relationname) values(%s,%s)"
             params = (item['name'], item['relationname'])
             tx.execute(sql, params)
