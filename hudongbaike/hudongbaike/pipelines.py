@@ -85,8 +85,8 @@ class HudongbaikePipeline(object):
             params = (item['name'], item['relationname'])
             tx.execute(sql, params)
         elif isinstance(item, items.WordItem):
-            sql = "insert into hudong_word_relation(name,relationname) values(%s,%s)"
-            params = (item['name'], item['relationname'])
+            sql = "insert into hudong_word_description(name,description) values(%s,%s)"
+            params = (item['name'], item['description'])
             tx.execute(sql, params)
 
             #tx.commit()

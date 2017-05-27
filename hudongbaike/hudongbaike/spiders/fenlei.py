@@ -59,11 +59,11 @@ class FenleiSpider(scrapy.spiders.Spider):
 
     def parse_ddindex(self, response):
         # directory info
-        ddname = response.css('div.f_2-app > ul > li > h5 ::text').extract_first()
+        ddname = response.css('div.f_2-app > ul > li > h5 ::text').extract_first().strip()
         item = DirectoryItem()
         item['name'] = ddname
         item['url'] = response.url
-        item['description'] = response.css('p.s2::text').extract_first()
+        item['description'] = response.css('p.s2::text').extract_first().strip()
         yield item
         # parent directory
         # sub directory
@@ -89,7 +89,7 @@ class FenleiSpider(scrapy.spiders.Spider):
                 for subname in sublist:
                     item = DirectoryRelationItem()
                     item['name'] = ddname
-                    item['relationname'] = subname.css('::text').extract_first()
+                    item['relationname'] = subname.css('::text').extract_first().strip()
                     yield item
             i = i + 1
 
@@ -108,8 +108,8 @@ class FenleiSpider(scrapy.spiders.Spider):
 
     def parse_word(self, response):
         item = WordItem()
-        item['name'] = response.css('div.content-h1 > h1 ::text').extract_first()
-        item['description'] = response.css('#anchor > p ::text').extract_first()
+        item['name'] = response.css('div.content-h1 > h1 ::text').extract_first().strip()
+        item['description'] = response.css('#anchor > p ::text').extract_first().strip()
         yield item
 
     def parse(self, response):
