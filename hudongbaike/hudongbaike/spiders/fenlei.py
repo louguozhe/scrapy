@@ -66,31 +66,38 @@ class FenleiSpider(scrapy.spiders.Spider):
         item['description'] = response.css('p.s2::text').extract_first()
         yield item
         # parent directory
-        #alist = response.css('div.sort_all p:nth-child(2) a::text').extract()
         # sub directory
-        sublist = response.css('div.sort_all p:nth-child(4) a')
-        for subname in sublist:
-            subdirectoryurl = subname.css('::attr(href)').extract_first()
-            # print('subdirectoryurl: ' + subdirectoryurl)
-            #yield scrapy.Request(response.urljoin(subdirectoryurl), callback=self.parse_ddindex)
-            yield scrapy.Request(subdirectoryurl, callback=self.parse_ddindex)
-            item = DirectoryGraphyItem()
-            item['name'] = ddname
-            item['subname'] = subname.css('::text').extract_first()
-            yield item
+        taghs = response.css('div.f_2 div:nth-child(2) h3')
+        print(range(1,len(taghs)+1))
+        i = 1
+        for tagh in taghs:
+            tag = tagh.css('::text').extract_first().strip()
+            if tag == u'上一级微百科':
+                pass
+            elif tag == u'下一级微百科':
+                sublist = response.css('div.f_2 div:nth-child(2) p:nth-child(%d) a' % (i*2))
+                for subname in sublist:
+                    subnamestr = subname.css('::text').extract_first().strip()
+                    item = DirectoryGraphyItem()
+                    item['name'] = ddname
+                    item['subname'] = subnamestr
+                    yield item
+                    subdirectoryurl = subname.css('::attr(href)').extract_first()
+                    yield scrapy.Request(subdirectoryurl, callback=self.parse_ddindex)
+            elif tag == u'相关微百科':
+                sublist = response.css('div.f_2 div:nth-child(2) p:nth-child(%d) a' % (i*2))
+                for subname in sublist:
+                    item = DirectoryRelationItem()
+                    item['name'] = ddname
+                    item['relationname'] = subname.css('::text').extract_first()
+                    yield item
+            i = i + 1
 
-        # relation directory
-        # relationlist = response.css('div.sort_all p:nth-child(6) a::text').extract()
-        # for parentname in relationlist:
-        #     item = DirectoryRelationItem()
-        #     item['name'] = ddname
-        #     item['relationname'] = parentname
-        #     yield item
 
-        # lookup sub directory
-        # wordlist_url = response.css('span.h2_m > a:nth-child(2) ::attr(href)').extract_first()
-        # if wordlist_url:
-        #     yield scrapy.Request(response.urljoin(wordlist_url), callback=self.parse_wordlist)
+        #lookup sub directory
+        wordlist_url = response.css('span.h2_m > a:nth-child(2) ::attr(href)').extract_first()
+        if wordlist_url:
+            yield scrapy.Request(response.urljoin(wordlist_url), callback=self.parse_wordlist)
 
     def parse_wordlist(self, response):
         wordurllist = response.css('#all-sort > dl > dd')

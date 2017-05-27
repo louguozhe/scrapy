@@ -31,6 +31,9 @@ class JsonWithEncodingPipeline(object):
         elif isinstance(item, items.DirectoryRelationItem):
             self.dfile.write('DirectoryRelationItem->%s:%s\n' % (item['name'],item['relationname']))  # 写入文件中
             pass
+        elif isinstance(item, items.WordItem):
+            self.dfile.write('WordItem->%s:%s\n' % (item['name'],item['description']))  # 写入文件中
+            pass
         return item
     def spider_closed(self, spider):#爬虫结束时关闭文件
         self.dfile.close()
@@ -81,8 +84,12 @@ class HudongbaikePipeline(object):
             sql = "insert into hudong_directory_relation(name,relationname) values(%s,%s)"
             params = (item['name'], item['relationname'])
             tx.execute(sql, params)
+            elif isinstance(item, items.WordItem):
+            sql = "insert into hudong_word_relation(name,relationname) values(%s,%s)"
+            params = (item['name'], item['relationname'])
+            tx.execute(sql, params)
 
-       #tx.commit()
+            #tx.commit()
 
     # 错误处理方法
     def _handle_error(self, failue, item, spider):
