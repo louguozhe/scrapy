@@ -109,7 +109,7 @@ class FenleiSpider(scrapy.spiders.Spider):
     def parse_word(self, response):
         item = WordItem()
         item['name'] = response.css('div.content-h1 > h1 ::text').extract_first().strip()
-        item['description'] = response.css('#anchor > p ::text').extract_first().strip()
+        item['description'] = response.css('#anchor > p ::text').extract_first()
         yield item
 
     def parse(self, response):
