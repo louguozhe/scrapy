@@ -21,6 +21,8 @@ class JsonWithEncodingPipeline(object):
         self.wfile = codecs.open('word.txt', 'w', encoding='utf-8')  # 保存为json文件
 
     def process_item(self, item, spider):
+        #line = json.dumps(dict(item)) + '\n'
+        #self.file.write(line.decode("unicode_escape"))
         print('JsonWithEncodingPipeline.process_item: %s' % item['name'])
         if isinstance(item, items.DirectoryItem):
             self.dfile.write('DirectoryItem->%s:%s\n' % (item['name'],item['url']))  # 写入文件中
