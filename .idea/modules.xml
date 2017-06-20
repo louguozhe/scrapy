@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../PythonCrawler-Scrapy-Mysql-File-Template/.idea/PythonCrawler-Scrapy-Mysql-File-Template.iml" filepath="$PROJECT_DIR$/../PythonCrawler-Scrapy-Mysql-File-Template/.idea/PythonCrawler-Scrapy-Mysql-File-Template.iml" />
       <module fileurl="file://$PROJECT_DIR$/../quotesbot/.idea/quotesbot.iml" filepath="$PROJECT_DIR$/../quotesbot/.idea/quotesbot.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/scrapy.iml" filepath="$PROJECT_DIR$/.idea/scrapy.iml" />
     </modules>

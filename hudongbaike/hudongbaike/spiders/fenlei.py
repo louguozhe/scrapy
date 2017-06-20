@@ -35,7 +35,7 @@ class HudongbaikeSpider(scrapy.spiders.Spider):
     def start_requests(self):
         # instead start_urls
         #yield scrapy.Request('http://fenlei.baike.com/', self.parse_index)
-        yield scrapy.Request(u'http://fenlei.baike.com/水果分类/', callback=self.parse_ddindex)
+        yield scrapy.Request(u'http://fenlei.baike.com/军区/', callback=self.parse_ddindex)
 
     # def start_requests(self):
     #     return [scrapy.FormRequest("http://www.example.com/login",
@@ -108,7 +108,11 @@ class HudongbaikeSpider(scrapy.spiders.Spider):
     def parse_word(self, response):
         item = WordItem()
         item['name'] = response.css('div.content-h1 > h1 ::text').extract_first().strip()
-        item['description'] = response.css('#anchor > p ::text').extract_first()
+        #item['description'] = response.css('#anchor > p ::text').extract_first()
+        descriptiontag = response.css('#anchor > p')
+        item['description'] = ''
+        if len(descriptiontag)>=1:
+            item['description'] = descriptiontag[0].xpath('string(.)').extract_first()
         yield item
 
     def parse(self, response):
