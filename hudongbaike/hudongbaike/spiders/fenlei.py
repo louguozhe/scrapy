@@ -108,6 +108,7 @@ class HudongbaikeSpider(scrapy.spiders.Spider):
     def parse_word(self, response):
         item = WordItem()
         item['name'] = response.css('div.content-h1 > h1 ::text').extract_first().strip()
+        item['url'] = response.url
         #item['description'] = response.css('#anchor > p ::text').extract_first()
         descriptiontag = response.css('#anchor > p')
         item['description'] = ''
