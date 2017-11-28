@@ -119,7 +119,7 @@ class HudongbaikeSpider(scrapy.spiders.Spider):
         typename=urllib.parse.unquote(str(response.url).split('/')[-3])
         wordurllist = response.css('#all-sort > dl > dd')
         for word in wordurllist:
-            wordname = urllib.parse.unquote(word.css('a::attr(href)').extract_first().split('/')[-1])
+            wordname = urllib.parse.unquote(word.css('a::attr(href)').extract_first().split('/')[-1]).replace('　','').replace('"','-').replace('&quot;','')
             #wordname = word.css('a::text').extract_first()
             item = WordItem()
             item['name'] = wordname
