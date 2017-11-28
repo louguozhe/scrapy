@@ -18,6 +18,17 @@ class JsonWithEncodingPipeline(object):
        2、在自己实现的爬虫类中yield item,会自动执行'''
     def __init__(self):
         self.dfile = codecs.open('directory.txt', 'w', encoding='utf-8')#保存为json文件
+        self.dfile.write('<?xml version="1.0"?>\n')
+        self.dfile.write('<rdf:RDF xmlns="http://fenlei.baike.com/ontology#"\n')
+        self.dfile.write('\txml:base="http://fenlei.baike.com/ontology"\n')
+        self.dfile.write('\txmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"\n')
+        self.dfile.write('\txmlns:owl="http://www.w3.org/2002/07/owl#"\n')
+        self.dfile.write('\txmlns:xml="http://www.w3.org/XML/1998/namespace"\n')
+        self.dfile.write('\txmlns:xsd="http://www.w3.org/2001/XMLSchema#"\n')
+        self.dfile.write('\txmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">\n')
+        self.dfile.write('\t<owl:Ontology rdf:about="http://fenlei.baike.com/ontology"/>\n')
+        self.dfile.write('\t\n')
+        self.dfile.write('\t\n')
         self.wfile = codecs.open('word.txt', 'w', encoding='utf-8')  # 保存为json文件
 
     def process_item(self, item, spider):
@@ -28,7 +39,10 @@ class JsonWithEncodingPipeline(object):
             self.dfile.write('DirectoryItem->%s:%s\n' % (item['name'],item['url']))  # 写入文件中
             pass
         elif isinstance(item, items.DirectoryGraphyItem):
-            self.dfile.write('DirectoryGraphyItem->%s:%s\n' % (item['name'],item['subname']))  # 写入文件中
+            self.dfile.write('\t<owl:Class rdf:about="http://fenlei.baike.com/ontology#%s">\n'% item['subname'])
+            self.dfile.write('\t\t<rdfs:subClassOf rdf:resource="http://fenlei.baike.com/ontology#%s"/>\n' % item['name'])
+            self.dfile.write('\t</owl:Class>\n')
+            #self.dfile.write('DirectoryGraphyItem->%s:%s\n' % (item['name'],item['subname']))  # 写入文件中
             pass
         elif isinstance(item, items.DirectoryRelationItem):
             self.dfile.write('DirectoryRelationItem->%s:%s\n' % (item['name'],item['relationname']))  # 写入文件中
@@ -38,6 +52,8 @@ class JsonWithEncodingPipeline(object):
             pass
         return item
     def spider_closed(self, spider):#爬虫结束时关闭文件
+        self.dfile.write('</rdf:RDF>\n')
+        print(u'爬虫结束工作！')
         self.dfile.close()
         self.wfile.close()
 

@@ -35,7 +35,8 @@ class HudongbaikeSpider(scrapy.spiders.Spider):
     def start_requests(self):
         # instead start_urls
         #yield scrapy.Request('http://fenlei.baike.com/', self.parse_index)
-        yield scrapy.Request(u'http://fenlei.baike.com/军区/', callback=self.parse_ddindex)
+        yield scrapy.Request(u'http://fenlei.baike.com/页面总分类', callback=self.parse_ddindex)
+        #yield scrapy.Request(u'http://fenlei.baike.com/军事', callback=self.parse_ddindex)
 
     # def start_requests(self):
     #     return [scrapy.FormRequest("http://www.example.com/login",
@@ -48,6 +49,7 @@ class HudongbaikeSpider(scrapy.spiders.Spider):
     #     pass
 
     def parse_index(self, response):
+
         # for dd in response.css('dd'):
         #     ddurl = dd.css('a ::text').extract_first()
         #     yield scrapy.Request(response.urljoin(ddurl), callback=self.parse_ddindex)
@@ -60,11 +62,11 @@ class HudongbaikeSpider(scrapy.spiders.Spider):
     def parse_ddindex(self, response):
         # directory info
         ddname = response.css('div.f_2-app > ul > li > h5 ::text').extract_first()
-        item = DirectoryItem()
-        item['name'] = ddname
-        item['url'] = response.url
-        item['description'] = response.css('p.s2::text').extract_first().strip()
-        yield item
+        # pitem = DirectoryItem()
+        # pitem['name'] = ddname
+        # pitem['url'] = response.url
+        # pitem['description'] = response.css('p.s2::text').extract_first().strip()
+        # yield pitem
         # parent directory
         # sub directory
         taghs = response.css('div.f_2 div:nth-child(2) h3')
@@ -72,6 +74,14 @@ class HudongbaikeSpider(scrapy.spiders.Spider):
         for tagh in taghs:
             tag = tagh.css('::text').extract_first().strip()
             if tag == u'上一级微百科':
+                # sublist = response.css('div.f_2 div:nth-child(2) p:nth-child(%d) a' % (i*2))
+                # for subname in sublist:
+                #     pnamestr = subname.css('::text').extract_first().strip()
+                #     if pnamestr != pnamestr:
+                #         item = DirectoryGraphyItem()
+                #         item['name'] = pnamestr
+                #         item['subname'] = ddname
+                #         yield item
                 pass
             elif tag == u'下一级微百科':
                 sublist = response.css('div.f_2 div:nth-child(2) p:nth-child(%d) a' % (i*2))
@@ -83,20 +93,20 @@ class HudongbaikeSpider(scrapy.spiders.Spider):
                     yield item
                     subdirectoryurl = subname.css('::attr(href)').extract_first()
                     yield scrapy.Request(subdirectoryurl, callback=self.parse_ddindex)
-            elif tag == u'相关微百科':
-                sublist = response.css('div.f_2 div:nth-child(2) p:nth-child(%d) a' % (i*2))
-                for subname in sublist:
-                    item = DirectoryRelationItem()
-                    item['name'] = ddname
-                    item['relationname'] = subname.css('::text').extract_first().strip()
-                    yield item
+            # elif tag == u'相关微百科':
+            #     sublist = response.css('div.f_2 div:nth-child(2) p:nth-child(%d) a' % (i*2))
+            #     for subname in sublist:
+            #         item = DirectoryRelationItem()
+            #         item['name'] = ddname
+            #         item['relationname'] = subname.css('::text').extract_first().strip()
+            #         yield item
             i = i + 1
 
 
         #lookup sub directory
-        wordlist_url = response.css('span.h2_m > a:nth-child(2) ::attr(href)').extract_first()
-        if wordlist_url:
-            yield scrapy.Request(response.urljoin(wordlist_url), callback=self.parse_wordlist)
+        # wordlist_url = response.css('span.h2_m > a:nth-child(2) ::attr(href)').extract_first()
+        # if wordlist_url:
+        #     yield scrapy.Request(response.urljoin(wordlist_url), callback=self.parse_wordlist)
 
     def parse_wordlist(self, response):
         wordurllist = response.css('#all-sort > dl > dd')
