@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
 
+import scrapy
+
 from twisted.enterprise import adbapi
 import MySQLdb
 import MySQLdb.cursors
 import codecs
 import json
-import items
+from baike.items import DirectoryItem
+from baike.items import DirectoryGraphyItem
+from baike.items import DirectoryRelationItem
+from baike.items import WordItem
+
 
 # Define your item pipelines here
 #
@@ -16,17 +22,18 @@ class JsonWithEncodingPipeline(object):
     '''保存到文件中对应的class
        1、在settings.py文件中配置
        2、在自己实现的爬虫类中yield item,会自动执行'''
-    def __init__(self):
-        self.dfile = codecs.open('directory.txt', 'w', encoding='utf-8')#保存为json文件
-        self.dfile.write('<?xml version="1.0"?>\n')
-        self.dfile.write('<rdf:RDF xmlns="http://fenlei.baike.com/ontology#"\n')
-        self.dfile.write('\txml:base="http://fenlei.baike.com/ontology"\n')
+    fenleiuri = 'http://fenlei.baike.com/ontology'
+    def open_spider(self, spider):
+        self.dfile = codecs.open('directory.owl', 'w', encoding='utf-8')#保存为json文件
+        self.dfile.write('<?xml version="1.0" encoding="utf-8" ?>\n')
+        self.dfile.write('<rdf:RDF xmlns="%s#"\n' % self.fenleiuri)
+        self.dfile.write('\txml:base="%s"\n' % self.fenleiuri)
         self.dfile.write('\txmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"\n')
         self.dfile.write('\txmlns:owl="http://www.w3.org/2002/07/owl#"\n')
         self.dfile.write('\txmlns:xml="http://www.w3.org/XML/1998/namespace"\n')
         self.dfile.write('\txmlns:xsd="http://www.w3.org/2001/XMLSchema#"\n')
         self.dfile.write('\txmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">\n')
-        self.dfile.write('\t<owl:Ontology rdf:about="http://fenlei.baike.com/ontology"/>\n')
+        self.dfile.write('\t<owl:Ontology rdf:about="%s"/>\n' % self.fenleiuri)
         self.dfile.write('\t\n')
         self.dfile.write('\t\n')
         self.wfile = codecs.open('word.txt', 'w', encoding='utf-8')  # 保存为json文件
@@ -35,25 +42,26 @@ class JsonWithEncodingPipeline(object):
         #line = json.dumps(dict(item)) + '\n'
         #self.file.write(line.decode("unicode_escape"))
         #print('JsonWithEncodingPipeline.process_item: %s' % item['name'])
-        if isinstance(item, items.DirectoryItem):
+        if isinstance(item, DirectoryItem):
             self.dfile.write('DirectoryItem->%s:%s\n' % (item['name'],item['url']))  # 写入文件中
             pass
-        elif isinstance(item, items.DirectoryGraphyItem):
-            self.dfile.write('\t<owl:Class rdf:about="http://fenlei.baike.com/ontology#%s">\n'% item['subname'])
-            self.dfile.write('\t\t<rdfs:subClassOf rdf:resource="http://fenlei.baike.com/ontology#%s"/>\n' % item['name'])
+        elif isinstance(item, DirectoryGraphyItem):
+            self.dfile.write('\t<owl:Class rdf:about="%s#%s">\n'% (self.fenleiuri,item['subname']))
+            self.dfile.write('\t\t<rdfs:subClassOf rdf:resource="%s#%s"/>\n' % (self.fenleiuri,item['name']))
             self.dfile.write('\t</owl:Class>\n')
             #self.dfile.write('DirectoryGraphyItem->%s:%s\n' % (item['name'],item['subname']))  # 写入文件中
             pass
-        elif isinstance(item, items.DirectoryRelationItem):
+        elif isinstance(item, DirectoryRelationItem):
             self.dfile.write('DirectoryRelationItem->%s:%s\n' % (item['name'],item['relationname']))  # 写入文件中
             pass
-        elif isinstance(item, items.WordItem):
-            self.dfile.write('WordItem->%s:%s\n' % (item['name'],item['description']))  # 写入文件中
-            pass
+        elif isinstance(item, WordItem):
+            self.dfile.write('\t<owl:NamedIndividual rdf:about = "%s#%s">\n' % (self.fenleiuri,item['name']))  # 写入文件中
+            self.dfile.write('\t\t<rdf:type rdf:resource="%s#%s"/>\n' % (self.fenleiuri,item['type']))  # 写入文件中
+            self.dfile.write('\t</owl:NamedIndividual>\n')  # 写入文件中
+        pass
         return item
-    def spider_closed(self, spider):#爬虫结束时关闭文件
+    def close_spider(self, spider):#爬虫结束时关闭文件
         self.dfile.write('</rdf:RDF>\n')
-        print(u'爬虫结束工作！')
         self.dfile.close()
         self.wfile.close()
 
@@ -90,19 +98,19 @@ class HudongbaikePipeline(object):
 
     # 写入数据库中
     def _conditional_insert(self, tx, item):
-        if isinstance(item, items.DirectoryItem):
+        if isinstance(item, DirectoryItem):
             sql = "insert into hudong_directory_description(name,url,description) values(%s,%s,%s)"
             params = (item['name'],item['url'], item['description'])
             tx.execute(sql, params)
-        elif isinstance(item, items.DirectoryGraphyItem):
+        elif isinstance(item, DirectoryGraphyItem):
             sql = "insert into hudong_directory_graphy(name,subname) values(%s,%s)"
             params = (item['name'], item['subname'])
             tx.execute(sql, params)
-        elif isinstance(item, items.DirectoryRelationItem):
+        elif isinstance(item, DirectoryRelationItem):
             sql = "insert into hudong_directory_relation(name,relationname) values(%s,%s)"
             params = (item['name'], item['relationname'])
             tx.execute(sql, params)
-        elif isinstance(item, items.WordItem):
+        elif isinstance(item, WordItem):
             sql = "insert into hudong_word_description(name,description,url) values(%s,%s,%s)"
             params = (item['name'], item['description'], item['url'])
             tx.execute(sql, params)
@@ -111,6 +119,6 @@ class HudongbaikePipeline(object):
 
     # 错误处理方法
     def _handle_error(self, failue, item, spider):
-        print '--------------database operation exception!!-----------------'
-        print '-------------------------------------------------------------'
-        print failue
+        print('--------------database operation exception!!-----------------')
+        print('-------------------------------------------------------------')
+        print(failue)
