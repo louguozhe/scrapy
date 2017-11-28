@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import scrapy
-from hudongbaike.items import WordItem
+from baike.items import WordItem
 
 class TestspiderSpider(scrapy.Spider):
     name = "testspider"

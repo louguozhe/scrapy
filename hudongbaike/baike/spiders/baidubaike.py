@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import scrapy
 
-from hudongbaike.items import DirectoryItem
-from hudongbaike.items import DirectoryGraphyItem
-from hudongbaike.items import DirectoryRelationItem
-from hudongbaike.items import WordItem
+from baike.items import DirectoryItem
+from baike.items import DirectoryGraphyItem
+from baike.items import DirectoryRelationItem
+from baike.items import WordItem
 
 
 class BaidubaikeSpider(scrapy.Spider):
@@ -96,5 +96,10 @@ class BaidubaikeSpider(scrapy.Spider):
         item = WordItem()
         item['name'] = response.css('dl.lemmaWgt-lemmaTitle.lemmaWgt-lemmaTitle- > dd > h1 ::text').extract_first().strip()
         item['url'] = response.url
-        item['description'] = response.css('div.lemma-summary div.para ::htmlbody()').extract_first()
+        descriptiontag = response.css('div.lemma-summary')
+        item['description'] = ''
+        if len(descriptiontag)>=1:
+            item['description'] = descriptiontag[0].xpath('string(.)').extract_first()
+        else: #可能为多义词
+            pass
         yield item

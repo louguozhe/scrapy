@@ -3,10 +3,10 @@
 
 import scrapy
 
-from hudongbaike.items import DirectoryItem
-from hudongbaike.items import DirectoryGraphyItem
-from hudongbaike.items import DirectoryRelationItem
-from hudongbaike.items import WordItem
+from baike.items import DirectoryItem
+from baike.items import DirectoryGraphyItem
+from baike.items import DirectoryRelationItem
+from baike.items import WordItem
 
 
 #参考

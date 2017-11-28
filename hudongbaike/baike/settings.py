@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Scrapy settings for hudongbaike project
+# Scrapy settings for baike project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -9,14 +9,14 @@
 #     http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 #     http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'hudongbaike'
+BOT_NAME = 'baike'
 
-SPIDER_MODULES = ['hudongbaike.spiders']
-NEWSPIDER_MODULE = 'hudongbaike.spiders'
+SPIDER_MODULES = ['baike.spiders']
+NEWSPIDER_MODULE = 'baike.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'hudongbaike (+http://www.yourdomain.com)'
+#USER_AGENT = 'baike (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
@@ -47,13 +47,13 @@ ROBOTSTXT_OBEY = False
 # Enable or disable spider middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 #SPIDER_MIDDLEWARES = {
-#    'hudongbaike.middlewares.HudongbaikeSpiderMiddleware': 543,
+#    'baike.middlewares.HudongbaikeSpiderMiddleware': 543,
 #}
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 #DOWNLOADER_MIDDLEWARES = {
-#    'hudongbaike.middlewares.MyCustomDownloaderMiddleware': 543,
+#    'baike.middlewares.MyCustomDownloaderMiddleware': 543,
 #}
 
 # Enable or disable extensions
@@ -65,8 +65,8 @@ ROBOTSTXT_OBEY = False
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'hudongbaike.pipelines.HudongbaikePipeline': 300,
-    #'hudongbaike.pipelines.JsonWithEncodingPipeline': 100,  # 保存到文件中
+    'baike.pipelines.HudongbaikePipeline': 300,
+    #'baike.pipelines.JsonWithEncodingPipeline': 100,  # 保存到文件中
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
