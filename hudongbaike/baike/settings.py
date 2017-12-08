@@ -66,7 +66,8 @@ ROBOTSTXT_OBEY = False
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     #'baike.pipelines.HudongbaikePipeline': 300,
-    'baike.pipelines.JsonWithEncodingPipeline': 100,  # 保存到文件中
+    #'baike.pipelines.HudongOntologyPipeline': 100,  # 保存到文件中
+    'baike.pipelines.BaiduOntologyPipeline': 100,  # 保存到文件中
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

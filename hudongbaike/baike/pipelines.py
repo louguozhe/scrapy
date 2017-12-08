@@ -18,13 +18,13 @@ from baike.items import WordItem
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
-class JsonWithEncodingPipeline(object):
-    '''保存到文件中对应的class
-       1、在settings.py文件中配置
-       2、在自己实现的爬虫类中yield item,会自动执行'''
+class OntologyPipeline:
     fenleiuri = 'http://fenlei.baike.com/ontology'
+    ontofilename = 'directory.owl'
+    def __init__(self):
+        pass
     def open_spider(self, spider):
-        self.dfile = codecs.open('directory.owl', 'w', encoding='utf-8')#保存为json文件
+        self.dfile = codecs.open(self.ontofilename, 'w', encoding='utf-8')#保存为json文件
         self.dfile.write('<?xml version="1.0" encoding="utf-8" ?>\n')
         self.dfile.write('<rdf:RDF xmlns="%s#"\n' % self.fenleiuri)
         self.dfile.write('\txml:base="%s"\n' % self.fenleiuri)
@@ -38,10 +38,12 @@ class JsonWithEncodingPipeline(object):
         self.dfile.write('\t\n')
         self.wfile = codecs.open('word.txt', 'w', encoding='utf-8')  # 保存为json文件
 
+    def close_spider(self, spider):#爬虫结束时关闭文件
+        self.dfile.write('</rdf:RDF>\n')
+        self.dfile.close()
+        self.wfile.close()
+
     def process_item(self, item, spider):
-        #line = json.dumps(dict(item)) + '\n'
-        #self.file.write(line.decode("unicode_escape"))
-        #print('JsonWithEncodingPipeline.process_item: %s' % item['name'])
         if isinstance(item, DirectoryItem):
             self.dfile.write('DirectoryItem->%s:%s\n' % (item['name'],item['url']))  # 写入文件中
             pass
@@ -52,7 +54,7 @@ class JsonWithEncodingPipeline(object):
             #self.dfile.write('DirectoryGraphyItem->%s:%s\n' % (item['name'],item['subname']))  # 写入文件中
             pass
         elif isinstance(item, DirectoryRelationItem):
-            self.dfile.write('DirectoryRelationItem->%s:%s\n' % (item['name'],item['relationname']))  # 写入文件中
+            #self.dfile.write('DirectoryRelationItem->%s:%s\n' % (item['name'],item['relationname']))  # 写入文件中
             pass
         elif isinstance(item, WordItem):
             self.dfile.write('\t<owl:NamedIndividual rdf:about = "%s#%s">\n' % (self.fenleiuri,item['name']))  # 写入文件中
@@ -60,10 +62,20 @@ class JsonWithEncodingPipeline(object):
             self.dfile.write('\t</owl:NamedIndividual>\n')  # 写入文件中
         pass
         return item
-    def close_spider(self, spider):#爬虫结束时关闭文件
-        self.dfile.write('</rdf:RDF>\n')
-        self.dfile.close()
-        self.wfile.close()
+
+class HudongOntologyPipeline(OntologyPipeline):
+    def __init__(self):
+        self.fenleiuri = 'http://fenlei.hudong.com/ontology'
+        self.ontofilename = 'hudong_fenlei.owl'
+
+class BaiduOntologyPipeline(OntologyPipeline):
+    '''保存到文件中对应的class
+       1、在settings.py文件中配置
+       2、在自己实现的爬虫类中yield item,会自动执行'''
+    def __init__(self):
+        self.fenleiuri = 'http://fenlei.baidu.com/ontology'
+        self.ontofilename = 'baidu_fenlei.owl'
+
 
 class HudongbaikePipeline(object):
     '''保存到数据库中对应的class
