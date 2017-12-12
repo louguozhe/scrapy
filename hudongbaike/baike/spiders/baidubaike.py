@@ -1,61 +1,46 @@
 # -*- coding: utf-8 -*-
 import scrapy
 
-from baike.items import DirectoryItem
-from baike.items import DirectoryGraphyItem
+from baike.items import ConceptItem
+from baike.items import ConceptRelationItem
 from baike.items import DirectoryRelationItem
-from baike.items import WordItem
-from baike.items import WordDescriptionItem
+from baike.items import InstanceItem
+from baike.items import InstanceDescriptionItem
 
 class BaidubaikeSpider(scrapy.Spider):
     name = 'baidubaike'
     allowed_domains = ['baike.baidu.com']
-    #start_urls = ['http://fenlei.baike.com/']
-
-    # def __init__(self, category=None, *args, **kwargs):
-    #     super(FenleiSpider, self).__init__(*args, **kwargs)
-        # if category:
-        #     self.start_urls = ['http://www.example.com/categories/%s' % category]
 
     def start_requests(self):
         # instead start_urls
         #yield scrapy.Request('http://fenlei.baike.com/', self.parse_index)
-        yield scrapy.Request(u'http://baike.baidu.com/fenlei/军事', callback=self.parse_ddindex)
-        #yield scrapy.Request(u'http://baike.baidu.com/fenlei/军事家', callback=self.parse_ddindex)
-        #yield scrapy.Request(u'http://baike.baidu.com/fenlei/革命家', callback=self.parse_ddindex)
-        #yield scrapy.Request(u'http://baike.baidu.com/fenlei/军事学家', callback=self.parse_ddindex)
+        #yield scrapy.Request(u'http://baike.baidu.com/fenlei/军事', callback=self.parseConceptIndex)
+        #yield scrapy.Request(u'http://baike.baidu.com/fenlei/军事家', callback=self.parseConceptIndex)
+        #yield scrapy.Request(u'http://baike.baidu.com/fenlei/革命家', callback=self.parseConceptIndex)
+        yield scrapy.Request(u'http://baike.baidu.com/fenlei/军事学', callback=self.parseConceptIndex)
 
-    # def start_requests(self):
-    #     return [scrapy.FormRequest("http://www.example.com/login",
-    #                                formdata={'user': 'john', 'pass': 'secret'},
-    #                                callback=self.logged_in)]
-    #
-    # def logged_in(self, response):
-    #     # here you would extract links to follow and return Requests for
-    #     # each of them, with another callback
-    #     pass
-
-    def parse_index(self, response):
-        pass
-
-    def parse_ddindex(self, response):
+    #概念主页
+    def parseConceptIndex(self, response):
         # directory info
         ddname = response.css('div.g-row.bread.log-set-param > h3 ::text').extract_first()
-        # item = DirectoryItem()
-        # item['name'] = ddname
-        # item['url'] = response.url
-        # #item['description'] = response.css('p.s2::text').extract_first().strip()
-        # yield item
+        if ddname == None:
+            return
+        item = ConceptItem()
+        item['name'] = ddname
+        item['url'] = response.url
+        #item['description'] = response.css('p.s2::text').extract_first().strip()
+        yield item
         # sub directory
         sublist = response.css('div.g-row.p-category.log-set-param > div.category-title > a')
+        print('debug: %d' % len(sublist))
         for subname in sublist:
             subnamestr = subname.css('::text').extract_first().strip()
-            item = DirectoryGraphyItem()
+            item = ConceptRelationItem()
             item['name'] = ddname
             item['subname'] = subnamestr
             yield item
             subdirectoryurl = subname.css('::attr(href)').extract_first()
-            yield scrapy.Request(response.urljoin(subdirectoryurl), callback=self.parse_ddindex)
+            yield scrapy.Request(response.urljoin(subdirectoryurl), callback=self.parseConceptIndex)
 
         relationlist = response.css('div.g-row.p-category.log-set-param > div.brother-list > div > a')
         for relationname in relationlist:
@@ -70,7 +55,7 @@ class BaidubaikeSpider(scrapy.Spider):
             #wordurl = word.css('::attr("href")').extract_first()
             #yield scrapy.Request(response.urljoin(wordurl), callback=self.parse_word)
             wordname = word.css('::text').extract_first()
-            item = WordItem()
+            item = InstanceItem()
             item['name'] = wordname
             item['type'] = ddname
             yield item
@@ -81,46 +66,34 @@ class BaidubaikeSpider(scrapy.Spider):
         for pageurl in pagelist:
             yield scrapy.Request(response.urljoin(pageurl.css('::attr("href")').extract_first()), callback=self.parse_wordlist)
 
-    #仅抓取实体名称
-    def parse_wordlistOnly(self, response):
-        wordurllist = response.css('div.grid-list.grid-list-spot > ul > li > div.list > a')
-        ddname = response.css('div.g-row.bread.log-set-param > h3 ::text').extract_first()
-        for word in wordurllist:
-            wordname = word.css('::text').extract_first()
-            item = WordItem()
-            item['name'] = wordname
-            item['type'] = ddname
-            yield item
-        pass
-        # page
-        pagelist = response.css('#pageIndex > a')
-        for pageurl in pagelist:
-            yield scrapy.Request(response.urljoin(pageurl.css('::attr("href")').extract_first()), callback=self.parse_wordlistOnly)
-
-    #抓取实体详细信息
+    #解析实体列表
     def parse_wordlist(self, response):
         wordurllist = response.css('div.grid-list.grid-list-spot > ul > li > div.list > a')
         ddname = response.css('div.g-row.bread.log-set-param > h3 ::text').extract_first()
         for word in wordurllist:
             wordname = word.css('::text').extract_first()
-            item = WordItem()
+            wordurl = word.css('::attr("href")').extract_first()
+            item = InstanceItem()
             item['name'] = wordname
             item['type'] = ddname
+            item['url'] = wordurl
             yield item
-            wordurl = word.css('::attr("href")').extract_first()
             yield scrapy.Request(response.urljoin(wordurl), callback=self.parse_word)
         pass
         # page
         pagelist = response.css('#pageIndex > a')
-        yield [scrapy.Request(response.urljoin(pageurl), callback=self.parse_wordlist) for pageurl in pagelist]
+        for pageurl in pagelist:
+            yield scrapy.Request(response.urljoin(pageurl.css('::attr("href")').extract_first()), callback=self.parse_wordlist)
 
     def parse_word(self, response):
-        wordName = response.css('dl.lemmaWgt-lemmaTitle.lemmaWgt-lemmaTitle- > dd > h1 ::text').extract_first().strip()
+        wordName = response.css('dl.lemmaWgt-lemmaTitle.lemmaWgt-lemmaTitle- > dd > h1 ::text').extract_first()
+        if wordName:
+            wordName = wordName.strip()
         basicInfoNames = response.css('dl.basicInfo-block:nth-child(1) > dt')
-        print('debug: %s %d' % (wordName,len(basicInfoNames)))
+        #print('debug: %s %d' % (wordName,len(basicInfoNames)))
         index = 1
         for basicInfoName in basicInfoNames:
-            item = WordDescriptionItem()
+            item = InstanceDescriptionItem()
             item['name'] = wordName
             item['property'] = basicInfoName.css('::text').extract_first().replace(' ','')
             item['value'] = response.css('dl.basicInfo-block:nth-child(1) > dd:nth-child(%d) ::text' % (2*index)).extract_first().replace('\n','')

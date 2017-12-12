@@ -7,11 +7,11 @@ import MySQLdb
 import MySQLdb.cursors
 import codecs
 import json
-from baike.items import DirectoryItem
-from baike.items import DirectoryGraphyItem
+from baike.items import ConceptItem
+from baike.items import ConceptRelationItem
 from baike.items import DirectoryRelationItem
-from baike.items import WordItem
-from baike.items import WordDescriptionItem
+from baike.items import InstanceItem
+from baike.items import InstanceDescriptionItem
 
 
 # Define your item pipelines here
@@ -47,10 +47,12 @@ class OntologyPipeline:
         self.wfile.close()
 
     def process_item(self, item, spider):
-        if isinstance(item, DirectoryItem):
-            self.dfile.write('DirectoryItem->%s:%s\n' % (item['name'],item['url']))  # 写入文件中
+        if isinstance(item, ConceptItem):
+            self.dfile.write('\t<owl:Class rdf:about="%s#%s">\n'% (self.fenleiuri,item['name']))
+            self.dfile.write('\t\t<rdfs:isDefinedBy>%s</rdfs:isDefinedBy>\n'% (item['url']))
+            self.dfile.write('\t</owl:Class>\n')
             pass
-        elif isinstance(item, DirectoryGraphyItem):
+        elif isinstance(item, ConceptRelationItem):
             self.dfile.write('\t<owl:Class rdf:about="%s#%s">\n'% (self.fenleiuri,item['subname']))
             self.dfile.write('\t\t<rdfs:subClassOf rdf:resource="%s#%s"/>\n' % (self.fenleiuri,item['name']))
             self.dfile.write('\t</owl:Class>\n')
@@ -59,9 +61,9 @@ class OntologyPipeline:
         elif isinstance(item, DirectoryRelationItem):
             #self.dfile.write('DirectoryRelationItem->%s:%s\n' % (item['name'],item['relationname']))  # 写入文件中
             pass
-        elif isinstance(item, WordItem):
+        elif isinstance(item, InstanceItem):
             pass
-        elif isinstance(item, WordDescriptionItem):
+        elif isinstance(item, InstanceDescriptionItem):
             self.wfile.write('%s,%s,%s\n' % (item['name'],item['property'],item['value']))  # 写入文件中
             pass
         return item
@@ -70,11 +72,9 @@ class HudongOntologyPipeline(OntologyPipeline):
     def __init__(self):
         self.fenleiuri = 'http://fenlei.hudong.com/ontology'
         self.ontofilename = 'hudong_fenlei.owl'
+        self.graphyfilename = 'hudong_graphy.owl'
 
 class BaiduOntologyPipeline(OntologyPipeline):
-    '''保存到文件中对应的class
-       1、在settings.py文件中配置
-       2、在自己实现的爬虫类中yield item,会自动执行'''
     def __init__(self):
         self.fenleiuri = 'http://fenlei.baidu.com/ontology'
         self.ontofilename = 'baidu_fenlei.owl'

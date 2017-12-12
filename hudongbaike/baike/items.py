@@ -8,14 +8,14 @@
 import scrapy
 
 
-class DirectoryItem(scrapy.Item):
+class ConceptItem(scrapy.Item):
     # define the fields for your item here like:
     name = scrapy.Field()
     url = scrapy.Field()
     description = scrapy.Field()
     pass
 
-class DirectoryGraphyItem(scrapy.Item):
+class ConceptRelationItem(scrapy.Item):
     # define the fields for your item here like:
     name = scrapy.Field()
     subname = scrapy.Field()
@@ -26,14 +26,14 @@ class DirectoryRelationItem(scrapy.Item):
     relationname = scrapy.Field()
     pass
 
-class WordItem(scrapy.Item):
+class InstanceItem(scrapy.Item):
     # define the fields for your item here like:
     name = scrapy.Field()
     type = scrapy.Field()
     url = scrapy.Field()
     description = scrapy.Field()
 
-class WordDescriptionItem(scrapy.Item):
+class InstanceDescriptionItem(scrapy.Item):
     # define the fields for your item here like:
     name = scrapy.Field()
     property = scrapy.Field()
