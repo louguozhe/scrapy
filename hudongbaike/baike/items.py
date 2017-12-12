@@ -32,3 +32,10 @@ class WordItem(scrapy.Item):
     type = scrapy.Field()
     url = scrapy.Field()
     description = scrapy.Field()
+
+class WordDescriptionItem(scrapy.Item):
+    # define the fields for your item here like:
+    name = scrapy.Field()
+    property = scrapy.Field()
+    value = scrapy.Field()
+    description = scrapy.Field()

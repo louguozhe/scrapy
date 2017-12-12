@@ -5,7 +5,7 @@ from baike.items import DirectoryItem
 from baike.items import DirectoryGraphyItem
 from baike.items import DirectoryRelationItem
 from baike.items import WordItem
-
+from baike.items import WordDescriptionItem
 
 class BaidubaikeSpider(scrapy.Spider):
     name = 'baidubaike'
@@ -79,7 +79,7 @@ class BaidubaikeSpider(scrapy.Spider):
         # page
         pagelist = response.css('#pageIndex > a')
         for pageurl in pagelist:
-            yield scrapy.Request(response.urljoin(pageurl.css('::attr("href")').extract_first()), callback=self.parse_wordlistOnly)
+            yield scrapy.Request(response.urljoin(pageurl.css('::attr("href")').extract_first()), callback=self.parse_wordlist)
 
     #仅抓取实体名称
     def parse_wordlistOnly(self, response):
@@ -100,7 +100,13 @@ class BaidubaikeSpider(scrapy.Spider):
     #抓取实体详细信息
     def parse_wordlist(self, response):
         wordurllist = response.css('div.grid-list.grid-list-spot > ul > li > div.list > a')
+        ddname = response.css('div.g-row.bread.log-set-param > h3 ::text').extract_first()
         for word in wordurllist:
+            wordname = word.css('::text').extract_first()
+            item = WordItem()
+            item['name'] = wordname
+            item['type'] = ddname
+            yield item
             wordurl = word.css('::attr("href")').extract_first()
             yield scrapy.Request(response.urljoin(wordurl), callback=self.parse_word)
         pass
@@ -109,13 +115,21 @@ class BaidubaikeSpider(scrapy.Spider):
         yield [scrapy.Request(response.urljoin(pageurl), callback=self.parse_wordlist) for pageurl in pagelist]
 
     def parse_word(self, response):
-        item = WordItem()
-        item['name'] = response.css('dl.lemmaWgt-lemmaTitle.lemmaWgt-lemmaTitle- > dd > h1 ::text').extract_first().strip()
-        item['url'] = response.url
-        descriptiontag = response.css('div.lemma-summary')
-        item['description'] = ''
-        if len(descriptiontag)>=1:
-            item['description'] = descriptiontag[0].xpath('string(.)').extract_first()
-        else: #可能为多义词
-            pass
-        yield item
+        wordName = response.css('dl.lemmaWgt-lemmaTitle.lemmaWgt-lemmaTitle- > dd > h1 ::text').extract_first().strip()
+        basicInfoNames = response.css('dl.basicInfo-block:nth-child(1) > dt')
+        print('debug: %s %d' % (wordName,len(basicInfoNames)))
+        index = 1
+        for basicInfoName in basicInfoNames:
+            item = WordDescriptionItem()
+            item['name'] = wordName
+            item['property'] = basicInfoName.css('::text').extract_first().replace(' ','')
+            item['value'] = response.css('dl.basicInfo-block:nth-child(1) > dd:nth-child(%d) ::text' % (2*index)).extract_first().replace('\n','')
+            yield item
+            index = index + 1
+        # descriptiontag = response.css('div.lemma-summary')
+        # item['description'] = ''
+        # if len(descriptiontag)>=1:
+        #     item['description'] = descriptiontag[0].xpath('string(.)').extract_first()
+        # else: #可能为多义词
+        #     pass
+        # yield item

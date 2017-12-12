@@ -11,6 +11,7 @@ from baike.items import DirectoryItem
 from baike.items import DirectoryGraphyItem
 from baike.items import DirectoryRelationItem
 from baike.items import WordItem
+from baike.items import WordDescriptionItem
 
 
 # Define your item pipelines here
@@ -21,6 +22,7 @@ from baike.items import WordItem
 class OntologyPipeline:
     fenleiuri = 'http://fenlei.baike.com/ontology'
     ontofilename = 'directory.owl'
+    graphyfilename = 'graphy.owl'
     def __init__(self):
         pass
     def open_spider(self, spider):
@@ -36,7 +38,8 @@ class OntologyPipeline:
         self.dfile.write('\t<owl:Ontology rdf:about="%s"/>\n' % self.fenleiuri)
         self.dfile.write('\t\n')
         self.dfile.write('\t\n')
-        self.wfile = codecs.open('word.txt', 'w', encoding='utf-8')  # 保存为json文件
+        self.wfile = codecs.open(self.graphyfilename, 'w', encoding='utf-8')  # 保存为json文件
+        self.wfile.write('name,property,value\n')  # 写入文件中
 
     def close_spider(self, spider):#爬虫结束时关闭文件
         self.dfile.write('</rdf:RDF>\n')
@@ -57,10 +60,10 @@ class OntologyPipeline:
             #self.dfile.write('DirectoryRelationItem->%s:%s\n' % (item['name'],item['relationname']))  # 写入文件中
             pass
         elif isinstance(item, WordItem):
-            self.dfile.write('\t<owl:NamedIndividual rdf:about = "%s#%s">\n' % (self.fenleiuri,item['name']))  # 写入文件中
-            self.dfile.write('\t\t<rdf:type rdf:resource="%s#%s"/>\n' % (self.fenleiuri,item['type']))  # 写入文件中
-            self.dfile.write('\t</owl:NamedIndividual>\n')  # 写入文件中
-        pass
+            pass
+        elif isinstance(item, WordDescriptionItem):
+            self.wfile.write('%s,%s,%s\n' % (item['name'],item['property'],item['value']))  # 写入文件中
+            pass
         return item
 
 class HudongOntologyPipeline(OntologyPipeline):
@@ -75,6 +78,7 @@ class BaiduOntologyPipeline(OntologyPipeline):
     def __init__(self):
         self.fenleiuri = 'http://fenlei.baidu.com/ontology'
         self.ontofilename = 'baidu_fenlei.owl'
+        self.graphyfilename = 'baidu_graphy.owl'
 
 
 class HudongbaikePipeline(object):
