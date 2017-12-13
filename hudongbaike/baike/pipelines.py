@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import scrapy
+import re
+import datetime
 
 from twisted.enterprise import adbapi
 import MySQLdb
@@ -19,10 +21,20 @@ from baike.items import InstanceDescriptionItem
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
+re_kuohao1 = re.compile('\(.*\)')
+re_kuohao2 = re.compile('\（.*\）')
+constDateType_xsd_t = ' rdf:datatype="http://www.w3.org/2001/XMLSchema#%s"'
+constDateType_string = constDateType_xsd_t % 'string'
+constDateType_default = constDateType_string
+constDateType_dataTime = constDateType_xsd_t % 'dateTime'
+
 class OntologyPipeline:
     fenleiuri = 'http://fenlei.baike.com/ontology'
     ontofilename = 'directory.owl'
     graphyfilename = 'graphy.owl'
+    propertyNameMap = {'0-100km/h加速时间':'百公里加速时间'}
+    propertyTypeMap = {'出生日期':constDateType_dataTime,
+                       '去世日期':constDateType_dataTime}
     def __init__(self):
         pass
     def open_spider(self, spider):
@@ -62,11 +74,56 @@ class OntologyPipeline:
             #self.dfile.write('DirectoryRelationItem->%s:%s\n' % (item['name'],item['relationname']))  # 写入文件中
             pass
         elif isinstance(item, InstanceItem):
-            pass
+            realName = self.process_InstanceName(item['name'])
+            if realName:
+                self.dfile.write('\t<owl:NamedIndividual rdf:about = "%s#%s">\n' % (self.fenleiuri,realName))  # 写入文件中
+                self.dfile.write('\t\t<rdf:type rdf:resource="%s#%s"/>\n' % (self.fenleiuri,item['type']))  # 写入文件中
+                self.dfile.write('\t</owl:NamedIndividual>\n')  # 写入文件中
         elif isinstance(item, InstanceDescriptionItem):
-            self.wfile.write('%s,%s,%s\n' % (item['name'],item['property'],item['value']))  # 写入文件中
+            realName = self.process_InstanceName(item['name'])
+            self.dfile.write('\t<owl:NamedIndividual rdf:about = "%s#%s">\n' % (self.fenleiuri,realName))  # 写入文件中
+            realPropertyName = self.process_propertyName(item['property'])
+            if realPropertyName:
+                realPropertyType = self.process_propertyType(realPropertyName)
+                realPropertyValue = self.process_propertyValue(realPropertyType,item['value'])
+                self.dfile.write('\t\t<%s%s>%s</%s>\n' % (realPropertyName,realPropertyType,realPropertyValue,realPropertyName))  # 写入文件中
+                self.dfile.write('\t</owl:NamedIndividual>\n')  # 写入文件中
+                self.wfile.write('%s,%s,%s\n' % (item['name'],realPropertyName,realPropertyValue))  # 写入文件中
             pass
         return item
+
+    def process_InstanceName(self,instanceName):
+        if instanceName:
+            instanceName = instanceName.replace(' ', '')
+        return instanceName
+
+    def process_propertyName(self,propertyName):
+        if propertyName:
+            propertyName = propertyName.replace('：', '').replace(' ', '').replace(' ', '').replace('/', '').replace('、', '')
+        propertyName = re_kuohao1.sub('',propertyName)
+        propertyName = re_kuohao2.sub('',propertyName)
+        propertyName = self.propertyNameMap.get(propertyName,propertyName)
+        if len(propertyName)>0 and propertyName[0].isdigit():
+            return None
+        return propertyName
+
+    def process_propertyType(self,propertyName):
+        return self.propertyTypeMap.get(propertyName,constDateType_default)
+
+    def process_propertyValue(self,propertyType,propertyValue):
+        if propertyValue:
+            propertyValue = propertyValue.replace('\n','').replace('  ','')
+            if propertyType == constDateType_dataTime:
+                try:
+                    if '-' in propertyValue:
+                        dateValue = datetime.datetime.strptime(propertyValue, "%Y-%m-%d")
+                    elif '年' in propertyValue:
+                        dateValue = datetime.datetime.strptime(propertyValue, "%Y年%m月%d日")
+                    return dateValue.strftime('%Y-%m-%d')
+                except Exception as e:
+                    print(e)
+                    return '1900-01-01'
+        return propertyValue
 
 class HudongOntologyPipeline(OntologyPipeline):
     def __init__(self):

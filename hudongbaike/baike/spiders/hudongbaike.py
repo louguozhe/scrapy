@@ -28,8 +28,9 @@ class HudongbaikeSpider(scrapy.spiders.Spider):
     allowed_domains = ['baike.com']
 
     def start_requests(self):
-        #yield scrapy.Request(u'http://fenlei.baike.com/页面总分类', callback=self.parse_treeindex)
-        #yield scrapy.Request(u'http://fenlei.baike.com/军事', callback=self.parse_ddindex)
+        #yield scrapy.Request(u'http://fenlei.baike.com/页面总分类', callback=self.parseConceptIndex)
+        #yield scrapy.Request(u'http://fenlei.baike.com/军事', callback=self.parseConceptIndex)
+        #yield scrapy.Request(u'http://fenlei.baike.com/军事人物', callback=self.parseConceptIndex)
         yield scrapy.Request(u'http://fenlei.baike.com/中国革命烈士', callback=self.parseConceptIndex)
 
     #解析概念页
@@ -88,25 +89,21 @@ class HudongbaikeSpider(scrapy.spiders.Spider):
     # 解析实例
     def parseInstance(self, response):
         #实例名
-        wordname = response.css('div.content-h1 > h1 ::text').extract_first().strip()
+        wordName = response.css('div.content-h1 > h1 ::text').extract_first()
+        if wordName:
+            wordName = wordName.strip()
         #实例属性
         #print('debug: %s %d' % (wordname,len(response.css('#datamodule > div > table > tr'))))
         infos = response.css('#datamodule > div > table > tr')
         for info in infos:
-            property = info.css('td:nth-child(1) strong ::text').extract_first()
-            if property:
-                item = InstanceDescriptionItem()
-                item['name'] = wordname
-                item['property'] = property.replace('：','')
-                item['value'] = info.css('td:nth-child(1) span').xpath('string(.)').extract_first().replace('\n','').replace('  ','')
-                yield item
-            property = info.css('td:nth-child(3) strong ::text').extract_first()
-            if property:
-                item = InstanceDescriptionItem()
-                item['name'] = wordname
-                item['property'] = property.replace('：','')
-                item['value'] = info.css('td:nth-child(3) span').xpath('string(.)').extract_first().replace('\n','').replace('  ','')
-                yield item
+            for i in [1,3]:
+                property = info.css('td:nth-child(%d) strong ::text' % i).extract_first()
+                if property:
+                    item = InstanceDescriptionItem()
+                    item['name'] = wordName
+                    item['property'] = property
+                    item['value'] = info.css('td:nth-child(%d) span' % i).xpath('string(.)').extract_first()
+                    yield item
         #实例描述
         #item['description'] = response.css('#anchor > p ::text').extract_first()
         # descriptiontag = response.css('#anchor > p')

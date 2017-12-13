@@ -90,13 +90,12 @@ class BaidubaikeSpider(scrapy.Spider):
         if wordName:
             wordName = wordName.strip()
         basicInfoNames = response.css('dl.basicInfo-block:nth-child(1) > dt')
-        #print('debug: %s %d' % (wordName,len(basicInfoNames)))
         index = 1
         for basicInfoName in basicInfoNames:
             item = InstanceDescriptionItem()
             item['name'] = wordName
-            item['property'] = basicInfoName.css('::text').extract_first().replace(' ','')
-            item['value'] = response.css('dl.basicInfo-block:nth-child(1) > dd:nth-child(%d) ::text' % (2*index)).extract_first().replace('\n','')
+            item['property'] = basicInfoName.css('::text').extract_first()
+            item['value'] = response.css('dl.basicInfo-block:nth-child(1) > dd:nth-child(%d) ::text' % (2*index)).extract_first()
             yield item
             index = index + 1
         # descriptiontag = response.css('div.lemma-summary')
