@@ -30,8 +30,8 @@ class HudongbaikeSpider(scrapy.spiders.Spider):
     def start_requests(self):
         #yield scrapy.Request(u'http://fenlei.baike.com/页面总分类', callback=self.parseConceptIndex)
         #yield scrapy.Request(u'http://fenlei.baike.com/军事', callback=self.parseConceptIndex)
-        #yield scrapy.Request(u'http://fenlei.baike.com/军事人物', callback=self.parseConceptIndex)
-        yield scrapy.Request(u'http://fenlei.baike.com/中国革命烈士', callback=self.parseConceptIndex)
+        yield scrapy.Request(u'http://fenlei.baike.com/军事人物', callback=self.parseConceptIndex)
+        #yield scrapy.Request(u'http://fenlei.baike.com/中国革命烈士', callback=self.parseConceptIndex)
 
     #解析概念页
     def parseConceptIndex(self, response):

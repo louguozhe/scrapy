@@ -81,9 +81,9 @@ class OntologyPipeline:
                 self.dfile.write('\t</owl:NamedIndividual>\n')  # 写入文件中
         elif isinstance(item, InstanceDescriptionItem):
             realName = self.process_InstanceName(item['name'])
-            self.dfile.write('\t<owl:NamedIndividual rdf:about = "%s#%s">\n' % (self.fenleiuri,realName))  # 写入文件中
             realPropertyName = self.process_propertyName(item['property'])
             if realPropertyName:
+                self.dfile.write('\t<owl:NamedIndividual rdf:about = "%s#%s">\n' % (self.fenleiuri, realName))  # 写入文件中
                 realPropertyType = self.process_propertyType(realPropertyName)
                 realPropertyValue = self.process_propertyValue(realPropertyType,item['value'])
                 self.dfile.write('\t\t<%s%s>%s</%s>\n' % (realPropertyName,realPropertyType,realPropertyValue,realPropertyName))  # 写入文件中
@@ -94,7 +94,7 @@ class OntologyPipeline:
 
     def process_InstanceName(self,instanceName):
         if instanceName:
-            instanceName = instanceName.replace(' ', '')
+            instanceName = instanceName.replace(' ', '').replace(' ', '')
         return instanceName
 
     def process_propertyName(self,propertyName):
