@@ -66,8 +66,8 @@ class HudongbaikeSpider(scrapy.spiders.Spider):
        # 实例列表分页
         wordlist_url = response.css('span.h2_m > a:nth-child(2) ::attr(href)').extract_first()
         if wordlist_url:
-            yield scrapy.Request(response.urljoin(wordlist_url), callback=self.parseInstanceList)
-
+            #临时yield scrapy.Request(response.urljoin(wordlist_url), callback=self.parseInstanceList)
+            pass
     # 分析实例列表
     def parseInstanceList(self, response):
         typename=urllib.parse.unquote(str(response.url).split('/')[-3])
@@ -82,8 +82,8 @@ class HudongbaikeSpider(scrapy.spiders.Spider):
             item['name'] = wordname
             item['type'] = typename
             item['url'] = wordurl
-            yield item
-            yield scrapy.Request(response.urljoin(wordurl), callback=self.parseInstance)
+            #临时yield item
+            #临时yield scrapy.Request(response.urljoin(wordurl), callback=self.parseInstance)
         pass
 
     # 解析实例
@@ -103,7 +103,7 @@ class HudongbaikeSpider(scrapy.spiders.Spider):
                     item['name'] = wordName
                     item['property'] = property
                     item['value'] = info.css('td:nth-child(%d) span' % i).xpath('string(.)').extract_first()
-                    yield item
+                    #临时yield item
         #实例描述
         #item['description'] = response.css('#anchor > p ::text').extract_first()
         # descriptiontag = response.css('#anchor > p')

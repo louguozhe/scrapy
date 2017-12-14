@@ -9,6 +9,8 @@ import MySQLdb
 import MySQLdb.cursors
 import codecs
 import json
+from neo4j.v1 import GraphDatabase, basic_auth
+
 from baike.items import ConceptItem
 from baike.items import ConceptRelationItem
 from baike.items import DirectoryRelationItem
@@ -26,15 +28,62 @@ re_kuohao2 = re.compile('\（.*\）')
 constDateType_xsd_t = ' rdf:datatype="http://www.w3.org/2001/XMLSchema#%s"'
 constDateType_string = constDateType_xsd_t % 'string'
 constDateType_default = constDateType_string
-constDateType_dataTime = constDateType_xsd_t % 'dateTime'
+constDateType_date = constDateType_xsd_t % 'date'
+constDateType_dateTime = constDateType_xsd_t % 'dateTime'
 
-class OntologyPipeline:
+class BasePipeline(object):
+    propertyNameMap = {'出生日期':'出生时间','出生年月':'出生时间'
+                        , '逝世日期': '去世时间','去世日期':'去世时间','去世年月':'去世时间'}
+    propertyTypeMap = {}#'出生日期':constDateType_date,'去世日期':constDateType_date}
+    propertyNames = {}
+
+    def __init__(self):
+        pass
+    def open_spider(self, spider):
+        pass
+    def close_spider(self, spider):
+        pass
+    def process_item(self, item, spider):
+        pass
+
+    def process_InstanceName(self,instanceName):
+        if instanceName:
+            instanceName = instanceName.replace(' ', '').replace(' ', '').replace('#', '_')
+        return instanceName
+
+    def process_propertyName(self,propertyName):
+        if propertyName:
+            propertyName = re_kuohao1.sub('',propertyName)
+            propertyName = re_kuohao2.sub('',propertyName)
+            propertyName = propertyName.replace('：', '').replace(' ', '').replace(' ', '').replace('　', '').replace('/', '').replace('、', '').replace('#', '_').replace('（', '_')
+        propertyName = self.propertyNameMap.get(propertyName,propertyName)
+        if len(propertyName)>0 and propertyName[0].isdigit():
+            return None
+        return propertyName
+
+    def process_propertyType(self,propertyName):
+        return self.propertyTypeMap.get(propertyName,constDateType_default)
+
+    def process_propertyValue(self,propertyType,propertyValue):
+        if propertyValue:
+            propertyValue = propertyValue.replace('\n','').replace('  ','').replace('&','_')
+            if propertyType == constDateType_date:
+                try:
+                    if '-' in propertyValue:
+                        dateValue = datetime.datetime.strptime(propertyValue, "%Y-%m-%d")
+                    elif '年' in propertyValue:
+                        dateValue = datetime.datetime.strptime(propertyValue, "%Y年%m月%d日")
+                    return dateValue.strftime('%Y-%m-%d')
+                except Exception as e:
+                    print(e)
+                    return '1900-01-01'
+        return propertyValue
+
+class OntologyPipeline(BasePipeline):
     fenleiuri = 'http://fenlei.baike.com/ontology'
     ontofilename = 'directory.owl'
     graphyfilename = 'graphy.owl'
-    propertyNameMap = {'0-100km/h加速时间':'百公里加速时间'}
-    propertyTypeMap = {'出生日期':constDateType_dataTime,
-                       '去世日期':constDateType_dataTime}
+
     def __init__(self):
         pass
     def open_spider(self, spider):
@@ -51,13 +100,15 @@ class OntologyPipeline:
         self.dfile.write('\t\n')
         self.dfile.write('\t\n')
         self.wfile = codecs.open(self.graphyfilename, 'w', encoding='utf-8')  # 保存为json文件
-        self.wfile.write('name,property,value\n')  # 写入文件中
+        self.wfile.write('property,count\n')  # 写入文件中
 
     def close_spider(self, spider):#爬虫结束时关闭文件
         self.dfile.write('</rdf:RDF>\n')
         self.dfile.close()
+        #self.wfile.write('%d\n' % len(self.propertyNames))
+        for propertyKey in self.propertyNames:
+            self.wfile.write('%s,%d\n' % (propertyKey,self.propertyNames[propertyKey]))
         self.wfile.close()
-
     def process_item(self, item, spider):
         if isinstance(item, ConceptItem):
             self.dfile.write('\t<owl:Class rdf:about="%s#%s">\n'% (self.fenleiuri,item['name']))
@@ -88,42 +139,14 @@ class OntologyPipeline:
                 realPropertyValue = self.process_propertyValue(realPropertyType,item['value'])
                 self.dfile.write('\t\t<%s%s>%s</%s>\n' % (realPropertyName,realPropertyType,realPropertyValue,realPropertyName))  # 写入文件中
                 self.dfile.write('\t</owl:NamedIndividual>\n')  # 写入文件中
-                self.wfile.write('%s,%s,%s\n' % (item['name'],realPropertyName,realPropertyValue))  # 写入文件中
+                #self.wfile.write('%s,%s,%s\n' % (item['name'],realPropertyName,realPropertyValue))  # 写入文件中
+                if self.propertyNames.get(realPropertyName):
+                    self.propertyNames[realPropertyName] = self.propertyNames[realPropertyName] + 1
+                else:
+                    self.propertyNames[realPropertyName] = 1
             pass
         return item
 
-    def process_InstanceName(self,instanceName):
-        if instanceName:
-            instanceName = instanceName.replace(' ', '').replace(' ', '')
-        return instanceName
-
-    def process_propertyName(self,propertyName):
-        if propertyName:
-            propertyName = propertyName.replace('：', '').replace(' ', '').replace(' ', '').replace('/', '').replace('、', '')
-        propertyName = re_kuohao1.sub('',propertyName)
-        propertyName = re_kuohao2.sub('',propertyName)
-        propertyName = self.propertyNameMap.get(propertyName,propertyName)
-        if len(propertyName)>0 and propertyName[0].isdigit():
-            return None
-        return propertyName
-
-    def process_propertyType(self,propertyName):
-        return self.propertyTypeMap.get(propertyName,constDateType_default)
-
-    def process_propertyValue(self,propertyType,propertyValue):
-        if propertyValue:
-            propertyValue = propertyValue.replace('\n','').replace('  ','')
-            if propertyType == constDateType_dataTime:
-                try:
-                    if '-' in propertyValue:
-                        dateValue = datetime.datetime.strptime(propertyValue, "%Y-%m-%d")
-                    elif '年' in propertyValue:
-                        dateValue = datetime.datetime.strptime(propertyValue, "%Y年%m月%d日")
-                    return dateValue.strftime('%Y-%m-%d')
-                except Exception as e:
-                    print(e)
-                    return '1900-01-01'
-        return propertyValue
 
 class HudongOntologyPipeline(OntologyPipeline):
     def __init__(self):
@@ -195,3 +218,72 @@ class HudongbaikePipeline(object):
         print('--------------database operation exception!!-----------------')
         print('-------------------------------------------------------------')
         print(failue)
+
+class HudongNeo4jPipeline(BasePipeline):
+    driver = None
+    session = None
+    def __init__(self):
+        try:
+            self.driver = GraphDatabase.driver("bolt://localhost:7687", auth=basic_auth("neo4j", "neo4j"))
+            self.session = self.driver.session()
+            pass
+        except Exception as e:
+            print(e)
+        pass
+    def open_spider(self, spider):
+        # 清空原有节点
+        self.runCypher("MATCH (a{scope:'%s'})-[r]-(b{scope:'%s'}) DELETE a,r,b" % (spider.name,spider.name))
+        self.runCypher("MATCH (a {scope:'%s'}) DELETE a" % spider.name)
+        #创建索引
+        self.runCypher("CREATE INDEX ON :Class(name)")
+        self.runCypher("CREATE INDEX ON :Class(scope)")
+        self.runCypher("CREATE INDEX ON :Instance(name)")
+        self.runCypher("CREATE INDEX ON :Instance(scope)")
+
+        pass
+    def close_spider(self, spider):
+        if self.session:
+            self.session.close()
+
+    def runCypher(self,cupher):
+        try:
+            if not self.session:
+                return
+            self.session.run(cupher)
+        except Exception as e:
+            print('runCypher Error: %s' % e)
+            pass
+
+    def process_item(self, item, spider):
+        if not self.session:
+            return item
+        # self.session.run("CREATE (a:Person {name:'Arthur', title:'King'})")
+        # result = self.session.run("MATCH (a:Person) WHERE a.name = 'Arthur' RETURN a.name AS name, a.title AS title")
+        # for record in result:
+        #     print("%s %s" % (record["title"], record["name"]))
+        if isinstance(item, ConceptItem):
+            self.runCypher("MERGE (n:Class{name:'%s',scope:'%s'})" % (item['name'],spider.name))
+            pass
+        elif isinstance(item, ConceptRelationItem):
+            self.runCypher("MERGE (n:Class{name:'%s',scope:'%s'})" % (item['name'],spider.name))
+            self.runCypher("MERGE (n:Class{name:'%s',scope:'%s'})" % (item['subname'],spider.name))
+            self.runCypher("MATCH (n:Class{name:'%s',scope:'%s'}),(m:Class{name:'%s',scope:'%s'}) CREATE (n)-[:subClassOf]->(m)" % (item['subname'],spider.name,item['name'],spider.name))
+            pass
+        elif isinstance(item, DirectoryRelationItem):
+            pass
+        elif isinstance(item, InstanceItem):???
+            realName = self.process_InstanceName(item['name'])
+            #,n.created = timestamp(),n.updated = timestamp()
+            #self.runCypher("CREATE (a:%s {name:'%s',scope:'%s'})" % (item['type'],realName,spider.name))
+            self.runCypher("MERGE (n:Instance {name:'%s',scope:'%s'})-[:instanceOf]->(c:Class{name:'%s',scope:'%s'})" % (realName,spider.name,item['type'],spider.name))
+        elif isinstance(item, InstanceDescriptionItem):
+            realName = self.process_InstanceName(item['name'])
+            realPropertyName = self.process_propertyName(item['property'])
+            if realPropertyName:
+                realPropertyType = self.process_propertyType(realPropertyName)
+                realPropertyValue = self.process_propertyValue(realPropertyType,item['value'])
+                self.runCypher("MERGE (n:Instance {name:'%s',scope:'%s',%s='%s'})" % (realName, spider.name,realPropertyName,realPropertyValue))
+                pass
+
+        return item
+
